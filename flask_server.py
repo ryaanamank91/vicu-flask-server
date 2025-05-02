@@ -16,6 +16,11 @@ def receive_data():
 def get_latest_data():
     return jsonify(latest_data), 200
 
+@app.route('/')
+def home():
+    return "<h2>✅ VICU Flask API is Live</h2><p>POST to <code>/data</code>, GET from <code>/latest</code></p>"
+
+
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 5000))

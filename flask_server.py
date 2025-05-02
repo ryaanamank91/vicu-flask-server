@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import os
+import time
 
 app = Flask(__name__)
 
@@ -61,19 +62,46 @@ fleet_data = [
     }
 ]
 
+alerts = []
+reports = []
+
 @app.route("/update_fleet/<vehicle_id>", methods=["POST"])
 def update_fleet(vehicle_id):
     incoming = request.json
     print(f"[Fleet] Update for {vehicle_id}:", incoming)
+
+    # Update fleet data
     for vehicle in fleet_data:
         if vehicle["id"] == vehicle_id:
             vehicle.update(incoming)
+
+            # Log alerts/reports if DTCs are present
+            dtcs = incoming.get("dtcs", [])
+            if dtcs:
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                entry = {
+                    "id": vehicle_id,
+                    "timestamp": timestamp,
+                    "dtcs": dtcs,
+                    "location": incoming.get("location", {})
+                }
+                alerts.append(entry)
+                reports.append(entry)
             break
+
     return jsonify({"status": "updated"}), 200
 
 @app.route("/fleet", methods=["GET"])
 def get_fleet():
     return jsonify(fleet_data), 200
+
+@app.route("/alerts", methods=["GET"])
+def get_alerts():
+    return jsonify(alerts), 200
+
+@app.route("/reports", methods=["GET"])
+def get_reports():
+    return jsonify(reports), 200
 
 @app.route("/")
 def home():
